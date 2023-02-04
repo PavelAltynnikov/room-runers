@@ -263,9 +263,11 @@ class BoundaryGenerator:
 
 
 class Level:
-    def __init__(self, size: int):
+    def __init__(self, size: int, character: ICharacter):
         self._size = size
+        self._character = character
         self._rooms = self._generate()
+        self._set_character_into_room()
 
     def _generate(self) -> list[list[Room]]:
         rooms = self._arrange_rooms()
@@ -360,12 +362,25 @@ class Level:
                 boundary.room_2 = rooms_pair[1]
                 rooms_pair[1].boundary_up = boundary
 
+    def _set_character_into_room(self):
+        self._character.change_room(self._find_random_room())
+
+    def _find_random_room(self) -> Room:
+        return self._rooms[0][0]
+
+    def _is_character_in_this_room(self, room: Room) -> str:
+        if self._character._room is room:  # type: ignore
+            return "c"
+        return " "
+
     def print(self):
         for row in self._rooms:
             print("┌" + "┐ ┌".join([str(room.boundary_up) for room in row]) + "┐")
             print(
                 " ".join([
-                    f"{room.boundary_left}   {room.boundary_right}"
+                    f"{room.boundary_left} "
+                    f"{self._is_character_in_this_room(room)} "
+                    f"{room.boundary_right}"
                     for room in row
                 ])
             )
@@ -374,5 +389,6 @@ class Level:
 
 if __name__ == "__main__":
     size = 10
-    level = Level(size)
+    c = Character()
+    level = Level(size, c)
     level.print()
