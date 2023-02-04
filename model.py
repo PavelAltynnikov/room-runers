@@ -15,7 +15,10 @@
 import random
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Protocol, Optional, Type
+from typing import Protocol, Optional, ForwardRef
+
+
+IRoom = ForwardRef("IRoom")  # type: ignore
 
 
 class BoundaryPosition(Enum):
@@ -24,7 +27,7 @@ class BoundaryPosition(Enum):
 
 
 class ICharacter(Protocol):
-    def change_room(self, room: Type["IRoom"]):
+    def change_room(self, room: IRoom):
         ...
 
     def try_to_go_up(self):
@@ -227,8 +230,8 @@ class Door(Boundary):
 
     def __str__(self):
         if self._position is BoundaryPosition.HORIZONTAL:
-            return "   "
-        return " "
+            return str("   ")
+        return str(" ")
 
 
 class Portal(Door):
@@ -239,8 +242,8 @@ class Portal(Door):
 
     def __str__(self):
         if self._position is BoundaryPosition.HORIZONTAL:
-            return " - "
-        return "⁞"
+            return str(" - ")
+        return str("⁞")
 
 
 class BoundaryGenerator:
@@ -356,7 +359,12 @@ class Level:
     def print(self):
         for row in self._rooms:
             print("┌" + "┐ ┌".join([str(room.boundary_up) for room in row]) + "┐")
-            print(" ".join([f"{room.boundary_left}   {room.boundary_right}" for room in row]))
+            print(
+                " ".join([
+                    f"{room.boundary_left}   {room.boundary_right}"
+                    for room in row
+                ])
+            )
             print("└" + "┘ └".join([str(room.boundary_down) for room in row]) + "┘")
 
 
