@@ -257,38 +257,107 @@ class BoundaryGenerator:
 
 class Level:
     def __init__(self, size: int):
-        self._rooms = self._generate(size)
+        self._size = size
+        self._rooms = self._generate()
 
-    def _generate(self, size: int) -> list[list[IRoom]]:
-        rooms: list[list[IRoom]] = []
-        bg = BoundaryGenerator(size)
+    def _generate(self) -> list[list[Room]]:
+        rooms = self._arrange_rooms()
+        self._arrange_external_boundaries(rooms)
+        self._arrange_internal_boundaries(rooms)
+        return rooms
 
-        for y in range(size):
+    def _arrange_rooms(self) -> list[list[Room]]:
+        rooms: list[list[Room]] = []
+
+        for y in range(self._size):
             row: list[Room] = []
-
-            for x in range(size):
-
-                point = Point(x, y)
-
-                room = Room(
-                    coordinates=point,
-                    boundary_left=bg.get_boundary(point, Position.LEFT),
-                    boundary_up=bg.get_boundary(point, Position.UP),
-                    boundary_down=bg.get_boundary(point, Position.DOWN),
-                    boundary_right=bg.get_boundary(point, Position.RIGHT),
-                )
-
-                row.append(room)
-
-            rooms.append(row)  # type: ignore
+            for x in range(self._size):
+                row.append(Room(Point(x, y)))
+            rooms.append(row)
 
         return rooms
 
+    def _arrange_external_boundaries(self, rooms: list[list[Room]]) -> None:
+        for row in rooms:
+            for room in row:
+                if room.location.y == 0:
+                    boundary = Wall()
+                    boundary.position = BoundaryPosition.HORIZONTAL
+                    room.boundary_up = boundary
+                    boundary.room_1 = room
+
+                if room.location.x == 0:
+                    boundary = Wall()
+                    boundary.position = BoundaryPosition.VERTICAL
+                    room.boundary_left = boundary
+                    boundary.room_1 = room
+
+                if room.location.y == self._size - 1:
+                    boundary = Wall()
+                    boundary.position = BoundaryPosition.HORIZONTAL
+                    room.boundary_down = boundary
+                    boundary.room_1 = room
+
+                if room.location.x == self._size - 1:
+                    boundary = Wall()
+                    boundary.position = BoundaryPosition.VERTICAL
+                    room.boundary_right = boundary
+                    boundary.room_1 = room
+
+    def _arrange_internal_boundaries(self, rooms: list[list[Room]]) -> None:
+        bg = BoundaryGenerator(self._size)
+        self._arrange_vertical_boundaries(rooms, bg)
+        self._arrange_horizontal_boundaries(rooms, bg)
+
+    def _arrange_vertical_boundaries(
+        self,
+        rooms: list[list[Room]],
+        b_generator: BoundaryGenerator
+    ) -> None:
+        for row in rooms:
+
+            adjacent_rooms = [
+                (row[i], row[i + 1])
+                for i
+                in range(len(row) - 1)
+            ]
+
+            for rooms_pair in adjacent_rooms:
+                boundary = b_generator.get_boundary(BoundaryPosition.VERTICAL)
+
+                boundary.room_1 = rooms_pair[0]
+                rooms_pair[0].boundary_right = boundary
+
+                boundary.room_2 = rooms_pair[1]
+                rooms_pair[1].boundary_left = boundary
+
+    def _arrange_horizontal_boundaries(
+        self,
+        rooms: list[list[Room]],
+        b_generator: BoundaryGenerator
+    ) -> None:
+
+        adjacent_rows = [
+            (rooms[i], rooms[i + 1])
+            for i
+            in range(len(rooms) - 1)
+        ]
+
+        for rows_pair in adjacent_rows:
+            for rooms_pair in zip(*rows_pair):
+                boundary = b_generator.get_boundary(BoundaryPosition.HORIZONTAL)
+
+                boundary.room_1 = rooms_pair[0]
+                rooms_pair[0].boundary_down = boundary
+
+                boundary.room_2 = rooms_pair[1]
+                rooms_pair[1].boundary_up = boundary
+
     def print(self):
         for row in self._rooms:
-            for room in row:
-                print(room)
-            print()
+            print("┌" + "┐ ┌".join([str(room.boundary_up) for room in row]) + "┐")
+            print(" ".join([f"{room.boundary_left}   {room.boundary_right}" for room in row]))
+            print("└" + "┘ └".join([str(room.boundary_down) for room in row]) + "┘")
 
 
 if __name__ == "__main__":
