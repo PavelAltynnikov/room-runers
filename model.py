@@ -117,37 +117,68 @@ class Point:
 
 
 class Room(IRoom):
-    def __init__(
-        self,
-        coordinates: Point,
-        boundary_up: Boundary,
-        boundary_right: Boundary,
-        boundary_down: Boundary,
-        boundary_left: Boundary
-    ):
-        self.coordinates = coordinates
-        self._boundary_up = boundary_up
-        self._boundary_right = boundary_right
-        self._boundary_down = boundary_down
-        self._boundary_left = boundary_left
+    def __init__(self, point: Point):
+        self.location = point
+        self._boundary_up = None
+        self._boundary_right = None
+        self._boundary_down = None
+        self._boundary_left = None
+
+    @property
+    def boundary_up(self):
+        return self._boundary_up
+
+    @boundary_up.setter
+    def boundary_up(self, value: Boundary):
+        self._boundary_up = value
+
+    @property
+    def boundary_right(self):
+        return self._boundary_right
+
+    @boundary_right.setter
+    def boundary_right(self, value: Boundary):
+        self._boundary_right = value
+
+    @property
+    def boundary_down(self):
+        return self._boundary_down
+
+    @boundary_down.setter
+    def boundary_down(self, value: Boundary):
+        self._boundary_down = value
+
+    @property
+    def boundary_left(self):
+        return self._boundary_left
+
+    @boundary_left.setter
+    def boundary_left(self, value: Boundary):
+        self._boundary_left = value
 
     def try_to_release_character_up(self, character: ICharacter) -> None:
-        self._boundary_up.move_character_to_another_room(character, self)
+        if self._boundary_up:
+            self._boundary_up.move_character_to_another_room(character, self)
 
     def try_to_release_character_right(self, character: ICharacter) -> None:
-        self._boundary_right.move_character_to_another_room(character, self)
+        if self._boundary_right:
+            self._boundary_right.move_character_to_another_room(character, self)
 
     def try_to_release_character_down(self, character: ICharacter) -> None:
-        self._boundary_down.move_character_to_another_room(character, self)
+        if self._boundary_down:
+            self._boundary_down.move_character_to_another_room(character, self)
 
     def try_to_release_character_left(self, character: ICharacter) -> None:
-        self._boundary_left.move_character_to_another_room(character, self)
+        if self._boundary_left:
+            self._boundary_left.move_character_to_another_room(character, self)
 
     def __str__(self):
-        return (
-            f"┌{self._boundary_up}┐\n"
-            f"{self._boundary_left}   {self._boundary_right}\n"
-            f"└{self._boundary_down}┘"
+        return "{}, {}, {}, {}, {}".format(
+            self.location,
+            self._boundary_up,
+            self._boundary_right,
+            self._boundary_down,
+            self._boundary_left
         )
 
 
