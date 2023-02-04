@@ -18,11 +18,9 @@ from enum import Enum
 from typing import Protocol, Optional, Type
 
 
-class Position(Enum):
-    UP = 0
-    RIGHT = 1
-    DOWN = 2
-    LEFT = 3
+class BoundaryPosition(Enum):
+    HORIZONTAL = 0
+    VERTICAL = 1
 
 
 class ICharacter(Protocol):
@@ -67,7 +65,7 @@ class Boundary(ABC):
     Задача ограждения передать игрока из одной комнаты в другую.
     """
     def __init__(self):
-        self._position: Optional[Position] = None
+        self._position: Optional[BoundaryPosition] = None
         self._room_1: Optional[IRoom] = None
         self._room_2: Optional[IRoom] = None
 
@@ -76,7 +74,7 @@ class Boundary(ABC):
         return self._position
 
     @position.setter
-    def position(self, position: Position):
+    def position(self, position: BoundaryPosition):
         self._position = position
 
     @property
@@ -212,7 +210,7 @@ class Wall(Boundary):
         return None
 
     def __str__(self):
-        if self._position is Position.UP or self._position is Position.DOWN:
+        if self._position is BoundaryPosition.HORIZONTAL:
             return "═══"
         return "║"
 
@@ -228,7 +226,7 @@ class Door(Boundary):
             character.change_room(self._room_1)
 
     def __str__(self):
-        if self._position is Position.UP or self._position is Position.DOWN:
+        if self._position is BoundaryPosition.HORIZONTAL:
             return "   "
         return " "
 
@@ -240,7 +238,7 @@ class Portal(Door):
         super().move_character_to_another_room(character, current_room)
 
     def __str__(self):
-        if self._position is Position.UP or self._position is Position.DOWN:
+        if self._position is BoundaryPosition.HORIZONTAL:
             return " - "
         return "⁞"
 
@@ -250,15 +248,7 @@ class BoundaryGenerator:
         self._size = size - 1
         self._boundaries: list[Boundary] = [Wall, Door, Portal]  # type: ignore
 
-    def get_boundary(self, location: Point, position: Position) -> Boundary:
-        if (location.x == 0 and position is Position.LEFT
-           or location.y == 0 and position is Position.UP
-           or location.x == self._size and position is Position.RIGHT
-           or location.y == self._size and position is Position.DOWN):
-            boundary = Wall()
-            boundary.position = position
-            return boundary
-
+    def get_boundary(self, position: BoundaryPosition) -> Boundary:
         boundary_type = random.choice(self._boundaries)
         boundary = boundary_type()  # type: ignore
         boundary.position = position
