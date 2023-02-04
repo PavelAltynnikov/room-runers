@@ -115,6 +115,9 @@ class Point:
         self.x = x
         self.y = y
 
+    def __str__(self):
+        return f"{type(self)}, x={self.x}, y={self.y}"
+
 
 class Room(IRoom):
     def __init__(self, point: Point):
