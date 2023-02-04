@@ -15,7 +15,7 @@
 import random
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Protocol, Optional
+from typing import Protocol, Optional, Type
 
 
 class Position(Enum):
@@ -26,8 +26,7 @@ class Position(Enum):
 
 
 class ICharacter(Protocol):
-    def change_room(self, room):
-        # type: (IRoom) -> None  # type: ignore
+    def change_room(self, room: Type["IRoom"]):
         ...
 
     def try_to_go_up(self):
