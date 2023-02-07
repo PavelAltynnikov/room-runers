@@ -1,6 +1,6 @@
 from model import Level, Character
 
-required_answers = "12345"
+required_answers = "wasdq"
 
 size = 10
 character = Character()
@@ -10,25 +10,25 @@ level.print()
 while True:
     answer = input(
         "Куда передвинуть персонажа?\n"
-        "1. Вверх\n"
-        "2. Вправо\n"
-        "3. Вниз\n"
-        "4. Влево\n"
-        "5. Закрыть игру\n"
-        "Ответ цифрой: "
+        "w. Вверх\n"
+        "d. Вправо\n"
+        "s. Вниз\n"
+        "a. Влево\n"
+        "q. Закрыть игру\n"
+        "Ответ буквой: "
     )
 
     if answer not in required_answers:
-        print(f"Ваш ответ не понятен, введите одну из цифр {required_answers}")
+        print(f"Ваш ответ не понятен, введите один из символов {required_answers}")
         continue
-    if answer == "5":
+    if answer == "q":
         break
 
-    if answer == "1":
+    if answer == "w":
         character.try_to_go_up()
-    elif answer == "2":
+    elif answer == "d":
         character.try_to_go_right()
-    elif answer == "3":
+    elif answer == "s":
         character.try_to_go_down()
     else:
         character.try_to_go_left()
