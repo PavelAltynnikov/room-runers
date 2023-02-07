@@ -252,13 +252,33 @@ class Portal(Door):
 
 class BoundaryGenerator:
     def __init__(self, size: int):
-        self._size = size - 1
+        self._max_walls_percent = 20  # процент должен быть для каждого ряда и столбца отдельно
+        self._internal_boundaries_amount = self._calculate_internal_boundaries_amount(size)
+        self._internal_walls_amount = 0
         self._boundaries: list[Boundary] = [Wall, Door, Portal]  # type: ignore
+
+    @staticmethod
+    def _calculate_internal_boundaries_amount(size):
+        return size * (size - 1) + size * (size - 1)
+
+    def _calculate_walls_percent(self):
+        return self._internal_walls_amount * 100 / self._internal_boundaries_amount 
 
     def get_boundary(self, position: BoundaryPosition) -> Boundary:
         boundary_type = random.choice(self._boundaries)
+
+        if boundary_type is Wall:
+            # print(f"{self._internal_walls_amount=}")
+            percent = self._calculate_walls_percent()
+            # print(f"{percent=}")
+            if percent > self._max_walls_percent:
+                return self.get_boundary(position)
+            else:
+                self._internal_walls_amount += 1
+
         boundary = boundary_type()  # type: ignore
         boundary.position = position
+
         return boundary  # type: ignore
 
 
@@ -388,7 +408,7 @@ class Level:
 
 
 if __name__ == "__main__":
-    size = 10
+    size = 4
     c = Character()
     level = Level(size, c)
     level.print()
