@@ -34,7 +34,7 @@ def main():
             character.try_to_go_right()
         elif answer == "s":
             character.try_to_go_down()
-        else:
+        elif answer == "a":
             character.try_to_go_left()
 
         level.print()
