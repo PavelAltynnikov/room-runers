@@ -1,6 +1,6 @@
 from model import Level, Character
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 
 
 def main():
