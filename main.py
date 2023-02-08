@@ -1,5 +1,6 @@
 from model import Level, Character
 
+VERSION = "0.1.0"
 required_answers = "12345"
 
 size = 10
