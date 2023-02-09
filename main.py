@@ -1,4 +1,5 @@
-from model import Level, Character
+from model.game_objects import Character
+from model.level import Level
 
 VERSION = "0.1.1"
 

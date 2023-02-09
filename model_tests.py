@@ -1,6 +1,6 @@
 import unittest
 
-from model import BoundaryGenerator
+from model.level import BoundaryGenerator
 
 
 class BoundaryGeneratorTests(unittest.TestCase):
