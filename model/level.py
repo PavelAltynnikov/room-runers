@@ -14,7 +14,7 @@
 """
 import random
 
-from .interface import Boundary, BoundaryPosition, ICharacter, IRoom
+from .interface import Boundary, BoundaryPosition, ICharacter, IRoom, ILevel
 
 
 class Point:
@@ -164,12 +164,20 @@ class BoundaryGenerator:
         return boundary  # type: ignore
 
 
-class Level:
+class Level(ILevel):
     def __init__(self, size: int, character: ICharacter):
         self._size = size
         self._character = character
         self._rooms = self._generate()
         self._set_character_into_room()
+
+    @property
+    def rooms(self) -> list[list[Room]]:
+        return self._rooms
+
+    def is_character_in_this_room(self, room: Room) -> bool:
+        # у character нужно сделать свойство current_room
+        return self._character._room is room  # type: ignore
 
     def _generate(self) -> list[list[Room]]:
         rooms = self._arrange_rooms()
@@ -270,24 +278,6 @@ class Level:
     def _find_random_room(self) -> Room:
         return self._rooms[0][0]
 
-    def _is_character_in_this_room(self, room: Room) -> str:
-        if self._character._room is room:  # type: ignore
-            return "c"
-        return " "
-
-    def print(self):
-        for row in self._rooms:
-            print("┌" + "┐ ┌".join([str(room.boundary_up) for room in row]) + "┐")
-            print(
-                " ".join([
-                    f"{room.boundary_left} "
-                    f"{self._is_character_in_this_room(room)} "
-                    f"{room.boundary_right}"
-                    for room in row
-                ])
-            )
-            print("└" + "┘ └".join([str(room.boundary_down) for room in row]) + "┘")
-
 
 def _test():
     from .game_objects import Character
@@ -295,7 +285,7 @@ def _test():
     size = 4
     c = Character()
     level = Level(size, c)
-    level.print()
+    # level.print()
 
 
 if __name__ == "__main__":
