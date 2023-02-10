@@ -1,6 +1,6 @@
-from model.game_objects import Character
-from model.level import Level
-from view import LevelView, Controller
+from src.model.game_objects import Character
+from src.model.level import Level
+from src.view import LevelView, Controller
 
 VERSION = "0.1.1"
 

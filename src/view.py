@@ -1,7 +1,7 @@
 from typing import Callable, Optional
 
-from model.interface import Boundary, BoundaryPosition, ILevel, IRoom, ICharacter
-from model.level import Wall, Door, Portal
+from src.model.interface import Boundary, BoundaryPosition, ILevel, IRoom, ICharacter
+from src.model.level import Wall, Door, Portal
 
 
 class Controller:
