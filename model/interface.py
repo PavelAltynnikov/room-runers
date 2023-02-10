@@ -99,3 +99,12 @@ class IRoom(Protocol):
     def try_to_release_character_left(self, character: ICharacter) -> None:
         """Выпустить игрока из комнаты в комнату слева"""
         ...
+
+
+class ILevel(Protocol):
+    @property
+    def rooms(self) -> list[list[IRoom]]:
+        ...
+
+    def is_character_in_this_room(self, room: IRoom) -> bool:
+        ...
