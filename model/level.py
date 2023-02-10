@@ -277,16 +277,3 @@ class Level(ILevel):
 
     def _find_random_room(self) -> Room:
         return self._rooms[0][0]
-
-
-def _test():
-    from .game_objects import Character
-
-    size = 4
-    c = Character()
-    level = Level(size, c)
-    # level.print()
-
-
-if __name__ == "__main__":
-    _test()
