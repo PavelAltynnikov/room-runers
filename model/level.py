@@ -98,11 +98,6 @@ class Wall(Boundary):
         """Перегородка не пропускает через себя, поэтому метод не меняет комнату."""
         return None
 
-    def __str__(self):
-        if self._position is BoundaryPosition.HORIZONTAL:
-            return "═══"
-        return "║"
-
 
 class Door(Boundary):
     def move_character_to_another_room(
@@ -114,22 +109,12 @@ class Door(Boundary):
                 and self._room_1 is not None):
             character.change_room(self._room_1)
 
-    def __str__(self):
-        if self._position is BoundaryPosition.HORIZONTAL:
-            return str("   ")
-        return str(" ")
-
 
 class Portal(Door):
     def move_character_to_another_room(
             self, character: ICharacter, current_room: IRoom) -> None:
         # тут нужен какой-то таймер
         super().move_character_to_another_room(character, current_room)
-
-    def __str__(self):
-        if self._position is BoundaryPosition.HORIZONTAL:
-            return str(" - ")
-        return str("⁞")
 
 
 class BoundaryGenerator:
