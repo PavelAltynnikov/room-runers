@@ -28,26 +28,6 @@ class ICharacter(Protocol):
         ...
 
 
-class IRoom(Protocol):
-    """Представляет ячейку игрового поля в которой может находится персонаж.
-    Задача комнаты хранить персонажа и ограждения."""
-    def try_to_release_character_up(self, character: ICharacter) -> None:
-        """Выпустить игрока из комнаты в комнату сверху"""
-        ...
-
-    def try_to_release_character_right(self, character: ICharacter) -> None:
-        """Выпустить игрока из комнаты в комнату справа"""
-        ...
-
-    def try_to_release_character_down(self, character: ICharacter) -> None:
-        """Выпустить игрока из комнаты в комнату снизу"""
-        ...
-
-    def try_to_release_character_left(self, character: ICharacter) -> None:
-        """Выпустить игрока из комнаты в комнату слева"""
-        ...
-
-
 class Boundary(ABC):
     """Представляет перегородку между двумя комнатами.
     Задача ограждения передать игрока из одной комнаты в другую.
@@ -94,3 +74,28 @@ class Boundary(ABC):
 
     def __str__(self):
         return f"{type(self)}, {self._position}"
+
+
+class IRoom(Protocol):
+    """Представляет ячейку игрового поля в которой может находится персонаж.
+    Задача комнаты хранить персонажа и ограждения."""
+    boundary_up: Boundary
+    boundary_right: Boundary
+    boundary_down: Boundary
+    boundary_left: Boundary
+
+    def try_to_release_character_up(self, character: ICharacter) -> None:
+        """Выпустить игрока из комнаты в комнату сверху"""
+        ...
+
+    def try_to_release_character_right(self, character: ICharacter) -> None:
+        """Выпустить игрока из комнаты в комнату справа"""
+        ...
+
+    def try_to_release_character_down(self, character: ICharacter) -> None:
+        """Выпустить игрока из комнаты в комнату снизу"""
+        ...
+
+    def try_to_release_character_left(self, character: ICharacter) -> None:
+        """Выпустить игрока из комнаты в комнату слева"""
+        ...
