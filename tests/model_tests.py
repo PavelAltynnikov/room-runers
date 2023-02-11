@@ -10,7 +10,7 @@ class BoundaryGeneratorTests(unittest.TestCase):
         answer = 0
 
         self.assertEqual(
-            BoundaryGenerator._calculate_internal_boundaries_amount(size),
+            BoundaryGenerator._calculate_internal_boundaries_amount(size),  # type: ignore
             answer
         )
 
@@ -19,7 +19,7 @@ class BoundaryGeneratorTests(unittest.TestCase):
         answer = 4
 
         self.assertEqual(
-            BoundaryGenerator._calculate_internal_boundaries_amount(size),
+            BoundaryGenerator._calculate_internal_boundaries_amount(size),  # type: ignore
             answer
         )
 
@@ -28,7 +28,7 @@ class BoundaryGeneratorTests(unittest.TestCase):
         answer = 12
 
         self.assertEqual(
-            BoundaryGenerator._calculate_internal_boundaries_amount(size),
+            BoundaryGenerator._calculate_internal_boundaries_amount(size),  # type: ignore
             answer
         )
 
@@ -37,6 +37,6 @@ class BoundaryGeneratorTests(unittest.TestCase):
         answer = 180
 
         self.assertEqual(
-            BoundaryGenerator._calculate_internal_boundaries_amount(size),
+            BoundaryGenerator._calculate_internal_boundaries_amount(size),  # type: ignore
             answer
         )
