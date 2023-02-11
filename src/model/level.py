@@ -12,65 +12,101 @@
     3.1 Если ограждение - это стена, то ничего не произойдёт;
     3.2 Если ограждение - это дверь, то игрок перейдёт в другую комнату.
 """
-import random
 from abc import ABC, abstractmethod
-from enum import Enum
-from typing import Protocol, Optional, ForwardRef
+import random
+
+from .interface import IBoundary, BoundaryPosition, ICharacter, IRoom, ILevel
 
 
-IRoom = ForwardRef("IRoom")  # type: ignore
+class Point:
+    def __init__(self, x: int, y: int):
+        self.x = x
+        self.y = y
+
+    def __str__(self):
+        return f"{type(self)}, x={self.x}, y={self.y}"
 
 
-class BoundaryPosition(Enum):
-    HORIZONTAL = 0
-    VERTICAL = 1
+class Room(IRoom):
+    def __init__(self, point: Point):
+        self._location = point
+        self._boundary_up = None
+        self._boundary_right = None
+        self._boundary_down = None
+        self._boundary_left = None
 
+    @property
+    def boundary_up(self):
+        return self._boundary_up
 
-class ICharacter(Protocol):
-    def change_room(self, room: IRoom):
-        ...
+    @boundary_up.setter
+    def boundary_up(self, value: IBoundary):
+        self._boundary_up = value
 
-    def try_to_go_up(self):
-        ...
+    @property
+    def boundary_right(self):
+        return self._boundary_right
 
-    def try_to_go_right(self):
-        ...
+    @boundary_right.setter
+    def boundary_right(self, value: IBoundary):
+        self._boundary_right = value
 
-    def try_to_go_down(self):
-        ...
+    @property
+    def boundary_down(self):
+        return self._boundary_down
 
-    def try_to_go_left(self):
-        ...
+    @boundary_down.setter
+    def boundary_down(self, value: IBoundary):
+        self._boundary_down = value
 
+    @property
+    def boundary_left(self):
+        return self._boundary_left
 
-class IRoom(Protocol):
-    """Представляет ячейку игрового поля в которой может находится персонаж.
-    Задача комнаты хранить персонажа и ограждения."""
+    @boundary_left.setter
+    def boundary_left(self, value: IBoundary):
+        self._boundary_left = value
+
+    def get_location(self) -> tuple[int, int]:
+        return self._location.x, self._location.y
+
+    def get_x_coordinate(self) -> int:
+        return self._location.x
+
+    def get_y_coordinate(self) -> int:
+        return self._location.y
+
     def try_to_release_character_up(self, character: ICharacter) -> None:
-        """Выпустить игрока из комнаты в комнату сверху"""
-        ...
+        if self._boundary_up:
+            self._boundary_up.move_character_to_another_room(character, self)
 
     def try_to_release_character_right(self, character: ICharacter) -> None:
-        """Выпустить игрока из комнаты в комнату справа"""
-        ...
+        if self._boundary_right:
+            self._boundary_right.move_character_to_another_room(character, self)
 
     def try_to_release_character_down(self, character: ICharacter) -> None:
-        """Выпустить игрока из комнаты в комнату снизу"""
-        ...
+        if self._boundary_down:
+            self._boundary_down.move_character_to_another_room(character, self)
 
     def try_to_release_character_left(self, character: ICharacter) -> None:
-        """Выпустить игрока из комнаты в комнату слева"""
-        ...
+        if self._boundary_left:
+            self._boundary_left.move_character_to_another_room(character, self)
+
+    def __str__(self):
+        return "{}, {}, {}, {}, {}".format(
+            self._location,
+            self._boundary_up,
+            self._boundary_right,
+            self._boundary_down,
+            self._boundary_left
+        )
 
 
-class Boundary(ABC):
-    """Представляет перегородку между двумя комнатами.
-    Задача ограждения передать игрока из одной комнаты в другую.
-    """
+class Boundary(ABC, IBoundary):
     def __init__(self):
-        self._position: Optional[BoundaryPosition] = None
-        self._room_1: Optional[IRoom] = None
-        self._room_2: Optional[IRoom] = None
+        self._position: BoundaryPosition | None = None
+        self._room_1: IRoom | None = None
+        self._room_2: IRoom | None = None
 
     @property
     def position(self):
@@ -111,115 +147,11 @@ class Boundary(ABC):
         return f"{type(self)}, {self._position}"
 
 
-class Point:
-    def __init__(self, x: int, y: int):
-        self.x = x
-        self.y = y
-
-    def __str__(self):
-        return f"{type(self)}, x={self.x}, y={self.y}"
-
-
-class Room(IRoom):
-    def __init__(self, point: Point):
-        self.location = point
-        self._boundary_up = None
-        self._boundary_right = None
-        self._boundary_down = None
-        self._boundary_left = None
-
-    @property
-    def boundary_up(self):
-        return self._boundary_up
-
-    @boundary_up.setter
-    def boundary_up(self, value: Boundary):
-        self._boundary_up = value
-
-    @property
-    def boundary_right(self):
-        return self._boundary_right
-
-    @boundary_right.setter
-    def boundary_right(self, value: Boundary):
-        self._boundary_right = value
-
-    @property
-    def boundary_down(self):
-        return self._boundary_down
-
-    @boundary_down.setter
-    def boundary_down(self, value: Boundary):
-        self._boundary_down = value
-
-    @property
-    def boundary_left(self):
-        return self._boundary_left
-
-    @boundary_left.setter
-    def boundary_left(self, value: Boundary):
-        self._boundary_left = value
-
-    def try_to_release_character_up(self, character: ICharacter) -> None:
-        if self._boundary_up:
-            self._boundary_up.move_character_to_another_room(character, self)
-
-    def try_to_release_character_right(self, character: ICharacter) -> None:
-        if self._boundary_right:
-            self._boundary_right.move_character_to_another_room(character, self)
-
-    def try_to_release_character_down(self, character: ICharacter) -> None:
-        if self._boundary_down:
-            self._boundary_down.move_character_to_another_room(character, self)
-
-    def try_to_release_character_left(self, character: ICharacter) -> None:
-        if self._boundary_left:
-            self._boundary_left.move_character_to_another_room(character, self)
-
-    def __str__(self):
-        return "{}, {}, {}, {}, {}".format(
-            self.location,
-            self._boundary_up,
-            self._boundary_right,
-            self._boundary_down,
-            self._boundary_left
-        )
-
-
-class Character(ICharacter):
-    def __init__(self):
-        self._room = None
-
-    def change_room(self, room: IRoom):
-        self._room = room
-
-    def try_to_go_up(self):
-        if self._room:
-            self._room.try_to_release_character_up(self)
-
-    def try_to_go_right(self):
-        if self._room:
-            self._room.try_to_release_character_right(self)
-
-    def try_to_go_down(self):
-        if self._room:
-            self._room.try_to_release_character_down(self)
-
-    def try_to_go_left(self):
-        if self._room:
-            self._room.try_to_release_character_left(self)
-
-
 class Wall(Boundary):
     def move_character_to_another_room(
             self, character: ICharacter, current_room: IRoom) -> None:
         """Перегородка не пропускает через себя, поэтому метод не меняет комнату."""
         return None
-
-    def __str__(self):
-        if self._position is BoundaryPosition.HORIZONTAL:
-            return "═══"
-        return "║"
 
 
 class Door(Boundary):
@@ -232,22 +164,12 @@ class Door(Boundary):
                 and self._room_1 is not None):
             character.change_room(self._room_1)
 
-    def __str__(self):
-        if self._position is BoundaryPosition.HORIZONTAL:
-            return str("   ")
-        return str(" ")
-
 
 class Portal(Door):
     def move_character_to_another_room(
             self, character: ICharacter, current_room: IRoom) -> None:
         # тут нужен какой-то таймер
         super().move_character_to_another_room(character, current_room)
-
-    def __str__(self):
-        if self._position is BoundaryPosition.HORIZONTAL:
-            return str(" - ")
-        return str("⁞")
 
 
 class BoundaryGenerator:
@@ -258,13 +180,13 @@ class BoundaryGenerator:
         self._boundaries: list[Boundary] = [Wall, Door, Portal]  # type: ignore
 
     @staticmethod
-    def _calculate_internal_boundaries_amount(size):
+    def _calculate_internal_boundaries_amount(size: int) -> int:
         return size * (size - 1) + size * (size - 1)
 
     def _calculate_walls_percent(self):
-        return self._internal_walls_amount * 100 / self._internal_boundaries_amount 
+        return self._internal_walls_amount * 100 / self._internal_boundaries_amount
 
-    def get_boundary(self, position: BoundaryPosition) -> Boundary:
+    def get_boundary(self, position: BoundaryPosition) -> IBoundary:
         boundary_type = random.choice(self._boundaries)
 
         if boundary_type is Wall:
@@ -282,65 +204,73 @@ class BoundaryGenerator:
         return boundary  # type: ignore
 
 
-class Level:
+class Level(ILevel):
     def __init__(self, size: int, character: ICharacter):
         self._size = size
         self._character = character
         self._rooms = self._generate()
         self._set_character_into_room()
 
-    def _generate(self) -> list[list[Room]]:
+    @property
+    def rooms(self) -> list[list[IRoom]]:
+        return self._rooms
+
+    def is_character_in_this_room(self, room: IRoom) -> bool:
+        # у character нужно сделать свойство current_room
+        return self._character._room is room  # type: ignore
+
+    def _generate(self) -> list[list[IRoom]]:
         rooms = self._arrange_rooms()
         self._arrange_external_boundaries(rooms)
         self._arrange_internal_boundaries(rooms)
         return rooms
 
-    def _arrange_rooms(self) -> list[list[Room]]:
-        rooms: list[list[Room]] = []
+    def _arrange_rooms(self) -> list[list[IRoom]]:
+        rooms: list[list[IRoom]] = []
 
         for y in range(self._size):
-            row: list[Room] = []
+            row: list[IRoom] = []
             for x in range(self._size):
                 row.append(Room(Point(x, y)))
             rooms.append(row)
 
         return rooms
 
-    def _arrange_external_boundaries(self, rooms: list[list[Room]]) -> None:
+    def _arrange_external_boundaries(self, rooms: list[list[IRoom]]) -> None:
         for row in rooms:
             for room in row:
-                if room.location.y == 0:
+                if room.get_y_coordinate() == 0:
                     boundary = Wall()
                     boundary.position = BoundaryPosition.HORIZONTAL
                     room.boundary_up = boundary
                     boundary.room_1 = room
 
-                if room.location.x == 0:
+                if room.get_x_coordinate() == 0:
                     boundary = Wall()
                     boundary.position = BoundaryPosition.VERTICAL
                     room.boundary_left = boundary
                     boundary.room_1 = room
 
-                if room.location.y == self._size - 1:
+                if room.get_y_coordinate() == self._size - 1:
                     boundary = Wall()
                     boundary.position = BoundaryPosition.HORIZONTAL
                     room.boundary_down = boundary
                     boundary.room_1 = room
 
-                if room.location.x == self._size - 1:
+                if room.get_x_coordinate() == self._size - 1:
                     boundary = Wall()
                     boundary.position = BoundaryPosition.VERTICAL
                     room.boundary_right = boundary
                     boundary.room_1 = room
 
-    def _arrange_internal_boundaries(self, rooms: list[list[Room]]) -> None:
+    def _arrange_internal_boundaries(self, rooms: list[list[IRoom]]) -> None:
         bg = BoundaryGenerator(self._size)
         self._arrange_vertical_boundaries(rooms, bg)
         self._arrange_horizontal_boundaries(rooms, bg)
 
     def _arrange_vertical_boundaries(
         self,
-        rooms: list[list[Room]],
+        rooms: list[list[IRoom]],
         b_generator: BoundaryGenerator
     ) -> None:
         for row in rooms:
@@ -362,7 +292,7 @@ class Level:
 
     def _arrange_horizontal_boundaries(
         self,
-        rooms: list[list[Room]],
+        rooms: list[list[IRoom]],
         b_generator: BoundaryGenerator
     ) -> None:
 
@@ -385,30 +315,5 @@ class Level:
     def _set_character_into_room(self):
         self._character.change_room(self._find_random_room())
 
-    def _find_random_room(self) -> Room:
+    def _find_random_room(self) -> IRoom:
         return self._rooms[0][0]
-
-    def _is_character_in_this_room(self, room: Room) -> str:
-        if self._character._room is room:  # type: ignore
-            return "c"
-        return " "
-
-    def print(self):
-        for row in self._rooms:
-            print("┌" + "┐ ┌".join([str(room.boundary_up) for room in row]) + "┐")
-            print(
-                " ".join([
-                    f"{room.boundary_left} "
-                    f"{self._is_character_in_this_room(room)} "
-                    f"{room.boundary_right}"
-                    for room in row
-                ])
-            )
-            print("└" + "┘ └".join([str(room.boundary_down) for room in row]) + "┘")
-
-
-if __name__ == "__main__":
-    size = 4
-    c = Character()
-    level = Level(size, c)
-    level.print()
