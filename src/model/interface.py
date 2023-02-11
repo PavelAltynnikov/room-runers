@@ -1,6 +1,5 @@
-from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Protocol, Optional, ForwardRef
+from typing import Protocol, ForwardRef, Optional
 
 
 IRoom = ForwardRef("IRoom")  # type: ignore
@@ -28,42 +27,28 @@ class ICharacter(Protocol):
         ...
 
 
-class Boundary(ABC):
-    """Представляет перегородку между двумя комнатами.
-    Задача ограждения передать игрока из одной комнаты в другую.
-    """
-    def __init__(self):
-        self._position: Optional[BoundaryPosition] = None
-        self._room_1: Optional[IRoom] = None
-        self._room_2: Optional[IRoom] = None
+class IBoundary(Protocol):
+    @property
+    def position(self) -> Optional[BoundaryPosition]:
+        ...
 
     @property
-    def position(self):
-        return self._position
-
-    @position.setter
-    def position(self, position: BoundaryPosition):
-        self._position = position
-
-    @property
-    def room_1(self):
-        return self._room_1
+    def room_1(self) -> Optional[IRoom]:
+        ...
 
     @room_1.setter
-    def room_1(self, room: IRoom):
-        self._room_1 = room
+    def room_1(self, room: IRoom) -> None:
+        ...
 
     @property
-    def room_2(self):
-        return self._room_2
+    def room_2(self) -> Optional[IRoom]:
+        ...
 
     @room_2.setter
-    def room_2(self, room: IRoom):
-        self._room_2 = room
+    def room_2(self, room: IRoom) -> None:
+        ...
 
-    @abstractmethod
-    def move_character_to_another_room(
-            self, character: ICharacter, current_room: IRoom) -> None:
+    def move_character_to_another_room(self, character: ICharacter, current_room: IRoom) -> None:
         """Перемещение модели игрока в соседнюю комнату.
 
         Args:
@@ -72,17 +57,50 @@ class Boundary(ABC):
         """
         ...
 
-    def __str__(self):
-        return f"{type(self)}, {self._position}"
-
 
 class IRoom(Protocol):
     """Представляет ячейку игрового поля в которой может находится персонаж.
     Задача комнаты хранить персонажа и ограждения."""
-    boundary_up: Boundary
-    boundary_right: Boundary
-    boundary_down: Boundary
-    boundary_left: Boundary
+    @property
+    def boundary_up(self) -> IBoundary | None:
+        ...
+
+    @boundary_up.setter
+    def boundary_up(self, value: IBoundary) -> None:
+        ...
+
+    @property
+    def boundary_right(self) -> IBoundary | None:
+        ...
+
+    @boundary_right.setter
+    def boundary_right(self, value: IBoundary) -> None:
+        ...
+
+    @property
+    def boundary_down(self) -> IBoundary | None:
+        ...
+
+    @boundary_down.setter
+    def boundary_down(self, value: IBoundary) -> None:
+        ...
+
+    @property
+    def boundary_left(self) -> IBoundary | None:
+        ...
+
+    @boundary_left.setter
+    def boundary_left(self, value: IBoundary) -> None:
+        ...
+
+    def get_location(self) -> tuple[int, int]:
+        ...
+
+    def get_x_coordinate(self) -> int:
+        ...
+
+    def get_y_coordinate(self) -> int:
+        ...
 
     def try_to_release_character_up(self, character: ICharacter) -> None:
         """Выпустить игрока из комнаты в комнату сверху"""

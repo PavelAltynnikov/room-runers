@@ -1,6 +1,6 @@
 from typing import Callable, Optional
 
-from src.model.interface import Boundary, BoundaryPosition, ILevel, IRoom, ICharacter
+from src.model.interface import IBoundary, BoundaryPosition, ILevel, IRoom, ICharacter
 from src.model.level import Wall, Door, Portal
 
 
@@ -8,7 +8,7 @@ class Controller:
     def __init__(self, character: ICharacter):
         self._character = character
         self._required_answers = "wasdq"
-        self.quit_action: Optional[Callable] = None
+        self.quit_action: Optional[Callable[..., None]] = None
 
     def query_input_device(self):
 
@@ -69,7 +69,10 @@ class LevelView:
             )
             print("└" + "┘ └".join([self._draw_boundary(room.boundary_down) for room in row]) + "┘")
 
-    def _draw_boundary(self, boundary: Boundary) -> str:
+    def _draw_boundary(self, boundary: IBoundary | None) -> str:
+        if boundary is None:
+            raise Exception("Невозможно отрисовать несуществующую перегородку.")
+
         if boundary.position is BoundaryPosition.HORIZONTAL:
             if isinstance(boundary, Wall):
                 return str("═══")
