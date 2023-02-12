@@ -42,6 +42,10 @@ class Controller:
             self._character.try_to_go_left()
 
 
+class EndGameException(Exception):
+    pass
+
+
 class LevelView:
     def __init__(self, level: ILevel, controller_1: Controller, controller_2: Controller):
         self._level = level
@@ -49,17 +53,29 @@ class LevelView:
         self._controller_1.quit_action = self.quit
         self._controller_2 = controller_2
         self._controller_2.quit_action = self.quit
-        self._is_showing = True
+        self.characters_encounter_delegate: Callable[..., bool] | None = None
 
     def show(self):
-        while self._is_showing:
-            self._draw_level()
-            self._controller_1.query_input_device()
-            self._draw_level()
-            self._controller_2.query_input_device()
+        try:
+            while True:
+                self._player_turn(self._controller_1)
+                self._player_turn(self._controller_2)
+        except EndGameException:
+            print("Игра закончена")
 
     def quit(self):
-        self._is_showing = False
+        raise EndGameException()
+
+    def _player_turn(self, controller: Controller):
+        self._draw_level()
+        controller.query_input_device()
+
+        if self.characters_encounter_delegate is None:
+            return
+
+        result = self.characters_encounter_delegate()
+        if result:
+            raise EndGameException()
 
     def _draw_level(self):
         for row in self._level.rooms:
