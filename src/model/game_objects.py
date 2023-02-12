@@ -2,7 +2,8 @@ from .interface import ICharacter, IRoom
 
 
 class Character(ICharacter):
-    def __init__(self):
+    def __init__(self, name: str):
+        self.name = name
         self._room = None
 
     def change_room(self, room: IRoom):

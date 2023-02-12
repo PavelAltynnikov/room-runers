@@ -13,6 +13,7 @@
     3.2 Если ограждение - это дверь, то игрок перейдёт в другую комнату.
 """
 from abc import ABC, abstractmethod
+from typing import Optional
 import random
 
 from .interface import IBoundary, BoundaryPosition, ICharacter, IRoom, ILevel
@@ -205,19 +206,23 @@ class BoundaryGenerator:
 
 
 class Level(ILevel):
-    def __init__(self, size: int, character: ICharacter):
+    def __init__(self, size: int, character_1: ICharacter, character_2: ICharacter):
         self._size = size
-        self._character = character
+        self._character_1 = character_1
+        self._character_2 = character_2
         self._rooms = self._generate()
-        self._set_character_into_room()
+        self._set_characters_into_room()
 
     @property
     def rooms(self) -> list[list[IRoom]]:
         return self._rooms
 
-    def is_character_in_this_room(self, room: IRoom) -> bool:
+    def get_character_from_room(self, room: IRoom) -> Optional[ICharacter]:
         # у character нужно сделать свойство current_room
-        return self._character._room is room  # type: ignore
+        if self._character_1._room is room:  # type: ignore
+            return self._character_1
+        if self._character_2._room is room:  # type: ignore
+            return self._character_2
 
     def _generate(self) -> list[list[IRoom]]:
         rooms = self._arrange_rooms()
@@ -312,8 +317,9 @@ class Level(ILevel):
                 boundary.room_2 = rooms_pair[1]
                 rooms_pair[1].boundary_up = boundary
 
-    def _set_character_into_room(self):
-        self._character.change_room(self._find_random_room())
+    def _set_characters_into_room(self):
+        self._character_1.change_room(self._find_random_room())
+        self._character_2.change_room(self._rooms[-1][-1])
 
     def _find_random_room(self) -> IRoom:
         return self._rooms[0][0]

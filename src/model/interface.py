@@ -11,6 +11,8 @@ class BoundaryPosition(Enum):
 
 
 class ICharacter(Protocol):
+    name: str
+
     def change_room(self, room: IRoom):
         ...
 
@@ -124,5 +126,5 @@ class ILevel(Protocol):
     def rooms(self) -> list[list[IRoom]]:
         ...
 
-    def is_character_in_this_room(self, room: IRoom) -> bool:
+    def get_character_from_room(self, room: IRoom) -> Optional[ICharacter]:
         ...

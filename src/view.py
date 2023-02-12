@@ -13,6 +13,7 @@ class Controller:
     def query_input_device(self):
 
         answer = input(
+            f"\nХодит персонаж {self._character.name}\n"
             "Куда передвинуть персонажа?\n"
             "w. Вверх\n"
             "d. Вправо\n"
@@ -42,16 +43,20 @@ class Controller:
 
 
 class LevelView:
-    def __init__(self, level: ILevel, controller: Controller):
+    def __init__(self, level: ILevel, controller_1: Controller, controller_2: Controller):
         self._level = level
-        self._controller = controller
-        self._controller.quit_action = self.quit
+        self._controller_1 = controller_1
+        self._controller_1.quit_action = self.quit
+        self._controller_2 = controller_2
+        self._controller_2.quit_action = self.quit
         self._is_showing = True
 
     def show(self):
         while self._is_showing:
             self._draw_level()
-            self._controller.query_input_device()
+            self._controller_1.query_input_device()
+            self._draw_level()
+            self._controller_2.query_input_device()
 
     def quit(self):
         self._is_showing = False
@@ -91,6 +96,9 @@ class LevelView:
         raise Exception(f"Невозможно отрисовать перегородку с типом: {boundary}")
 
     def _draw_character(self, room: IRoom):
-        if self._level.is_character_in_this_room(room):
-            return "c"
-        return " "
+        character = self._level.get_character_from_room(room)
+
+        if character is None:
+            return " "
+
+        return character.name[0]
