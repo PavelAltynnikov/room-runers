@@ -22,6 +22,7 @@ class Controller:
             "q. Закрыть игру\n"
             "Ответ буквой: "
         )
+        print()
 
         if answer not in self._required_answers:
             print(f"Ваш ответ не понятен, введите один из символов {self._required_answers}")
