@@ -319,7 +319,7 @@ class Level(ILevel):
 
     def _set_characters_into_room(self):
         self._character_1.change_room(self._find_random_room())
-        self._character_2.change_room(self._rooms[-1][-1])
+        self._character_2.change_room(self._find_random_room())
 
     def _find_random_room(self) -> IRoom:
-        return self._rooms[0][0]
+        return self._rooms[random.randint(0, self._size - 1)][random.randint(0, self._size - 1)]
