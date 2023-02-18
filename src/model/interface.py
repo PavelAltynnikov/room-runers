@@ -128,3 +128,25 @@ class ILevel(Protocol):
 
     def get_character_from_room(self, room: IRoom) -> Optional[ICharacter]:
         ...
+
+
+class ITimer:
+    @property
+    def is_active(self) -> bool:
+        ...
+
+    @property
+    def current_time(self) -> int:
+        ...
+
+    def start(self) -> None:
+        ...
+
+    def is_times_up(self) -> bool:
+        ...
+
+    def update(self) -> None:
+        ...
+
+    def reset(self) -> None:
+        ...
