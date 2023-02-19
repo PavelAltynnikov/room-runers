@@ -1,6 +1,6 @@
 from typing import Callable, Optional
 
-from src.model.interface import IBoundary, BoundaryPosition, ILevel, IRoom, ICharacter
+from src.model.interface import IBoundary, BoundaryPosition, ILevel, IRoom, ICharacter, ITimer
 from src.model.level import Wall, Door, Portal
 
 
@@ -51,19 +51,35 @@ class EndGameException(Exception):
 
 
 class LevelView:
-    def __init__(self, level: ILevel, controller_1: Controller, controller_2: Controller):
+    def __init__(
+        self,
+        level: ILevel,
+        game_timer: ITimer,
+        controller_1: Controller,
+        controller_2: Controller
+    ):
         self._level = level
         self._controller_1 = controller_1
         self._controller_1.quit_action = self.quit
         self._controller_2 = controller_2
         self._controller_2.quit_action = self.quit
+        self._game_timer = game_timer
+
         self.characters_encounter_delegate: Callable[..., bool] | None = None
+        self.game_times_up: Callable[..., bool] | None = None
 
     def show(self):
         try:
             while True:
                 self._player_turn(self._controller_1)
                 self._player_turn(self._controller_2)
+
+                self._game_timer.update()
+
+                if self.game_times_up:
+                    if self.game_times_up():
+                        self.quit()
+
         except EndGameException:
             print("Игра закончена")
 
