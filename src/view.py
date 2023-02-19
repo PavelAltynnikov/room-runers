@@ -7,25 +7,26 @@ from src.model.level import Wall, Door, Portal
 class Controller:
     def __init__(self, character: ICharacter):
         self._character = character
-        self._required_answers = "wasdq"
+        self._required_answers = "wasdvq"
         self.quit_action: Optional[Callable[..., None]] = None
 
     def query_input_device(self):
 
         answer = input(
             f"\nХодит персонаж {self._character.name}\n"
-            "Куда передвинуть персонажа?\n"
-            "w. Вверх\n"
-            "d. Вправо\n"
-            "s. Вниз\n"
-            "a. Влево\n"
-            "q. Закрыть игру\n"
+            "Что делать персонажу?\n"
+            "w. Идти вверх\n"
+            "d. Идти вправо\n"
+            "s. Идти вниз\n"
+            "a. Идти влево\n"
+            "v. Ждать\n"
+            "q. Сдаться\n"
             "Ответ буквой: "
         )
         print()
 
         if answer not in self._required_answers:
-            print(f"Ваш ответ не понятен, введите один из символов {self._required_answers}")
+            print(f"Ваш ответ не понятен, введите один из символов {self._required_answers}\n")
             return
 
         if answer == "q":
@@ -41,6 +42,8 @@ class Controller:
             self._character.try_to_go_down()
         elif answer == "a":
             self._character.try_to_go_left()
+        elif answer == "v":
+            print("Ну ждите...\n")
 
 
 class EndGameException(Exception):
