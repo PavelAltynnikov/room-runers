@@ -47,8 +47,6 @@ class Timer(ITimer):
         return self._current_time >= self._end_time
 
     def update(self):
-        print(self._is_active)
-        print(self._current_time)
         if self._is_active:
             self._current_time += 1
 
