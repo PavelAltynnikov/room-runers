@@ -58,9 +58,19 @@ class Timer(ITimer):
 
 
 class GameRules:
-    def __init__(self, character_1: ICharacter, character_2: ICharacter):
+    def __init__(self, timer: ITimer, character_1: ICharacter, character_2: ICharacter):
+        self._timer = timer
         self._character_1 = character_1
         self._character_2 = character_2
 
     def check_characters_encounter(self):
         return self._character_1._room is self._character_2._room  # type: ignore
+
+    def check_times_up(self):
+        if not self._timer.is_active:
+            self._timer.start()
+
+        if self._timer.is_times_up():
+            return True
+
+        return False
