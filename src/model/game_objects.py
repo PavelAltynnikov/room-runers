@@ -40,6 +40,10 @@ class Timer(ITimer):
     def current_time(self):
         return self._current_time
 
+    @property
+    def end_time(self):
+        return self._end_time
+
     def start(self):
         self._is_active = True
 

@@ -80,6 +80,10 @@ class LevelView:
                     if self.game_times_up():
                         self.quit()
 
+                print(
+                    f"Осталось ходов: {self._game_timer.end_time - self._game_timer.current_time}"
+                )
+
         except EndGameException:
             print("Игра закончена")
 

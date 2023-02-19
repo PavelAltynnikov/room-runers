@@ -139,6 +139,10 @@ class ITimer:
     def current_time(self) -> int:
         ...
 
+    @property
+    def end_time(self) -> int:
+        ...
+
     def start(self) -> None:
         ...
 
