@@ -249,6 +249,27 @@ class BoundaryGenerator:
         return boundary  # type: ignore
 
 
+class PortalsKeeper:
+    """Класс контролирует все порталы.
+    Его задача обновлять таймеры и переносить персонажа через порталы.
+    """
+    def __init__(self):
+        self.portals: list[Portal] = []
+
+    def add_portal(self, portal: Portal):
+        print("Добавили портал")
+        self.portals.append(portal)
+
+    def try_to_open_portals(self):
+        print("Хотим открыть порталы")
+        for portal in self.portals:
+            if not portal.timer.is_active:
+                continue
+
+            portal.timer.update()
+            portal.move_character_to_another_room()
+
+
 class Level(ILevel):
     def __init__(self, size: int, character_1: ICharacter, character_2: ICharacter):
         self._size = size
