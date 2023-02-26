@@ -9,7 +9,7 @@ def main():
     character_1 = Character("Ripley")
     character_2 = Character("Alien")
 
-    game_timer = Timer(5)
+    game_timer = Timer(10)
     game_rules = GameRules(game_timer, character_1, character_2)
 
     portals_keeper = PortalsKeeper()
