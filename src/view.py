@@ -89,6 +89,8 @@ class LevelView:
 
         except EndGameException:
             print("Игра закончена")
+        finally:
+            input()
 
     def quit(self):
         raise EndGameException()
