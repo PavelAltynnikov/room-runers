@@ -13,6 +13,10 @@ class BoundaryPosition(Enum):
 class ICharacter(Protocol):
     name: str
 
+    @property
+    def current_room(self) -> Optional[IRoom]:
+        ...
+
     def change_room(self, room: IRoom):
         ...
 

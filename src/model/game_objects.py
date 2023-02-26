@@ -6,6 +6,10 @@ class Character(ICharacter):
         self.name = name
         self._room = None
 
+    @property
+    def current_room(self):
+        return self._room
+
     def change_room(self, room: IRoom):
         self._room = room
 
