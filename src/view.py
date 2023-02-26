@@ -1,7 +1,7 @@
 from typing import Callable, Optional
 
 from src.model.interface import IBoundary, BoundaryPosition, ILevel, IRoom, ICharacter, ITimer
-from src.model.level import Wall, Door, Portal
+from src.model.level import Wall, Door, Portal, PortalsKeeper
 
 
 class Controller:
@@ -54,11 +54,13 @@ class LevelView:
     def __init__(
         self,
         level: ILevel,
+        portals_keeper: PortalsKeeper,
         game_timer: ITimer,
         controller_1: Controller,
         controller_2: Controller
     ):
         self._level = level
+        self._portals_keeper = portals_keeper
         self._controller_1 = controller_1
         self._controller_1.quit_action = self.quit
         self._controller_2 = controller_2
@@ -74,6 +76,7 @@ class LevelView:
                 self._player_turn(self._controller_1)
                 self._player_turn(self._controller_2)
 
+                self._portals_keeper.try_to_open_portals()
                 self._game_timer.update()
 
                 if self.game_times_up:

@@ -271,10 +271,17 @@ class PortalsKeeper:
 
 
 class Level(ILevel):
-    def __init__(self, size: int, character_1: ICharacter, character_2: ICharacter):
+    def __init__(
+        self,
+        size: int,
+        character_1: ICharacter,
+        character_2: ICharacter,
+        portals_keeper: PortalsKeeper
+    ):
         self._size = size
         self._character_1 = character_1
         self._character_2 = character_2
+        self._portals_keeper = portals_keeper
         self._rooms = self._generate()
         self._set_characters_into_room()
 
@@ -283,11 +290,11 @@ class Level(ILevel):
         return self._rooms
 
     def get_character_from_room(self, room: IRoom) -> Optional[ICharacter]:
-        # у character нужно сделать свойство current_room
-        if self._character_1._room is room:  # type: ignore
+        if self._character_1.current_room is room:
             return self._character_1
-        if self._character_2._room is room:  # type: ignore
+        if self._character_2.current_room is room:
             return self._character_2
+        return None
 
     def _generate(self) -> list[list[IRoom]]:
         rooms = self._arrange_rooms()
@@ -354,6 +361,9 @@ class Level(ILevel):
             for rooms_pair in adjacent_rooms:
                 boundary = b_generator.get_boundary(BoundaryPosition.VERTICAL)
 
+                if isinstance(boundary, Portal):
+                    self._portals_keeper.add_portal(boundary)
+
                 boundary.room_1 = rooms_pair[0]
                 rooms_pair[0].boundary_right = boundary
 
@@ -375,6 +385,9 @@ class Level(ILevel):
         for rows_pair in adjacent_rows:
             for rooms_pair in zip(*rows_pair):
                 boundary = b_generator.get_boundary(BoundaryPosition.HORIZONTAL)
+
+                if isinstance(boundary, Portal):
+                    self._portals_keeper.add_portal(boundary)
 
                 boundary.room_1 = rooms_pair[0]
                 rooms_pair[0].boundary_down = boundary
