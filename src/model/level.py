@@ -257,14 +257,13 @@ class PortalsKeeper:
         self.portals: list[Portal] = []
 
     def add_portal(self, portal: Portal):
-        print("Добавили портал")
         self.portals.append(portal)
 
     def try_to_open_portals(self):
-        print("Хотим открыть порталы")
         for portal in self.portals:
             if not portal.timer.is_active:
                 continue
+            print(f"Хотим открыть портал: {id(portal)}")
 
             portal.timer.update()
             portal.move_character_to_another_room()
