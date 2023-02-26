@@ -16,7 +16,8 @@ from abc import ABC, abstractmethod
 from typing import Optional
 import random
 
-from .interface import IBoundary, BoundaryPosition, ICharacter, IRoom, ILevel
+from .interface import IBoundary, BoundaryPosition, ICharacter, IRoom, ILevel, ITimer
+from .game_objects import Timer
 
 
 class Point:
@@ -79,19 +80,23 @@ class Room(IRoom):
 
     def try_to_release_character_up(self, character: ICharacter) -> None:
         if self._boundary_up:
-            self._boundary_up.move_character_to_another_room(character, self)
+            self._boundary_up.character_wants_to_pass(character)
+            self._boundary_up.move_character_to_another_room()
 
     def try_to_release_character_right(self, character: ICharacter) -> None:
         if self._boundary_right:
-            self._boundary_right.move_character_to_another_room(character, self)
+            self._boundary_right.character_wants_to_pass(character)
+            self._boundary_right.move_character_to_another_room()
 
     def try_to_release_character_down(self, character: ICharacter) -> None:
         if self._boundary_down:
-            self._boundary_down.move_character_to_another_room(character, self)
+            self._boundary_down.character_wants_to_pass(character)
+            self._boundary_down.move_character_to_another_room()
 
     def try_to_release_character_left(self, character: ICharacter) -> None:
         if self._boundary_left:
-            self._boundary_left.move_character_to_another_room(character, self)
+            self._boundary_left.character_wants_to_pass(character)
+            self._boundary_left.move_character_to_another_room()
 
     def __str__(self):
         return "{}, {}, {}, {}, {}".format(
@@ -108,6 +113,7 @@ class Boundary(ABC, IBoundary):
         self._position: BoundaryPosition | None = None
         self._room_1: IRoom | None = None
         self._room_2: IRoom | None = None
+        self._character: ICharacter | None = None
 
     @property
     def position(self):
@@ -133,44 +139,80 @@ class Boundary(ABC, IBoundary):
     def room_2(self, room: IRoom):
         self._room_2 = room
 
-    @abstractmethod
-    def move_character_to_another_room(
-            self, character: ICharacter, current_room: IRoom) -> None:
-        """Перемещение модели игрока в соседнюю комнату.
-
-        Args:
-            character (ICharacter): Модель игрока.
-            current_room (IRoom): Комната в которой сейчас находится модель игрока.
-        """
-        ...
-
     def __str__(self):
         return f"{type(self)}, {self._position}"
 
+    def character_wants_to_pass(self, character: ICharacter):
+        self._character = character
+
+    def character_is_gone(self):
+        self._character = None
+
+    @abstractmethod
+    def move_character_to_another_room(self) -> None:
+        ...
+
 
 class Wall(Boundary):
-    def move_character_to_another_room(
-            self, character: ICharacter, current_room: IRoom) -> None:
-        """Перегородка не пропускает через себя, поэтому метод не меняет комнату."""
+    def __init__(self):
+        super().__init__()
+
+    def move_character_to_another_room(self) -> None:
+        """Стена не пропускает через себя, поэтому метод не меняет комнату."""
+        self.character_is_gone()
         return None
 
 
 class Door(Boundary):
-    def move_character_to_another_room(
-            self, character: ICharacter, current_room: IRoom) -> None:
-        if (current_room is self._room_1
-                and self._room_2 is not None):
-            character.change_room(self._room_2)
-        elif (current_room is self._room_2
-                and self._room_1 is not None):
-            character.change_room(self._room_1)
+    def __ini__(self):
+        super().__init__()
+
+    def move_character_to_another_room(self) -> None:
+        if self._character is None:
+            return
+
+        if (
+            self._character.current_room is self._room_1
+            and self._room_2 is not None
+        ):
+            self._character.change_room(self._room_2)
+        elif (
+            self._character.current_room is self._room_2
+            and self._room_1 is not None
+        ):
+            self._character.change_room(self._room_1)
+
+        self.character_is_gone()
 
 
 class Portal(Door):
-    def move_character_to_another_room(
-            self, character: ICharacter, current_room: IRoom) -> None:
-        # тут нужен какой-то таймер
-        super().move_character_to_another_room(character, current_room)
+    def __init__(self, timer: ITimer):
+        super().__init__()
+        self._timer = timer
+
+    @property
+    def timer(self) -> ITimer:
+        return self._timer
+
+    def character_is_gone(self):
+        super().character_is_gone()
+        self._timer.reset()
+
+    def move_character_to_another_room(self) -> None:
+        if self._character is None:
+            # TODO надо подумать, стоит ли тут выкидывать исключение.
+            # TODO не нравится мне этот reset.
+            # Нужно чтобы кто-то запускал метод character_is_gone данного класса.
+            # Потому что сейчас данный метод запускается только после пересечения перегородки.
+            self._timer.reset()
+            return
+
+        if not self._timer.is_active:
+            self._timer.start()
+
+        if self._timer.is_times_up():
+            super().move_character_to_another_room()
+            self._timer.reset()
 
 
 class BoundaryGenerator:
@@ -191,15 +233,17 @@ class BoundaryGenerator:
         boundary_type = random.choice(self._boundaries)
 
         if boundary_type is Wall:
-            # print(f"{self._internal_walls_amount=}")
             percent = self._calculate_walls_percent()
-            # print(f"{percent=}")
             if percent > self._max_walls_percent:
                 return self.get_boundary(position)
             else:
                 self._internal_walls_amount += 1
 
-        boundary = boundary_type()  # type: ignore
+        if boundary_type is Portal:
+            boundary = boundary_type(Timer(amount_of_time=2))  # type: ignore
+        else:
+            boundary = boundary_type()  # type: ignore
+
         boundary.position = position
 
         return boundary  # type: ignore
