@@ -10,12 +10,15 @@
 от направления движения.
 3. Пытается перейти через неё.
     3.1 Если ограждение - это стена, то ничего не произойдёт;
-    3.2 Если ограждение - это дверь, то игрок перейдёт в другую комнату.
+    3.2 Если ограждение - это дверь, то игрок перейдёт в другую комнату;
+    3.3 Если ограждение - это портал, то игрок перейдёт в другую комнату через некоторое время.
 """
 from abc import ABC, abstractmethod
+from typing import Optional
 import random
 
-from .interface import IBoundary, BoundaryPosition, ICharacter, IRoom, ILevel
+from .interface import IBoundary, BoundaryPosition, ICharacter, IRoom, ILevel, ITimer
+from .game_objects import Timer
 
 
 class Point:
@@ -78,19 +81,23 @@ class Room(IRoom):
 
     def try_to_release_character_up(self, character: ICharacter) -> None:
         if self._boundary_up:
-            self._boundary_up.move_character_to_another_room(character, self)
+            self._boundary_up.character_wants_to_pass(character)
+            self._boundary_up.move_character_to_another_room()
 
     def try_to_release_character_right(self, character: ICharacter) -> None:
         if self._boundary_right:
-            self._boundary_right.move_character_to_another_room(character, self)
+            self._boundary_right.character_wants_to_pass(character)
+            self._boundary_right.move_character_to_another_room()
 
     def try_to_release_character_down(self, character: ICharacter) -> None:
         if self._boundary_down:
-            self._boundary_down.move_character_to_another_room(character, self)
+            self._boundary_down.character_wants_to_pass(character)
+            self._boundary_down.move_character_to_another_room()
 
     def try_to_release_character_left(self, character: ICharacter) -> None:
         if self._boundary_left:
-            self._boundary_left.move_character_to_another_room(character, self)
+            self._boundary_left.character_wants_to_pass(character)
+            self._boundary_left.move_character_to_another_room()
 
     def __str__(self):
         return "{}, {}, {}, {}, {}".format(
@@ -107,6 +114,7 @@ class Boundary(ABC, IBoundary):
         self._position: BoundaryPosition | None = None
         self._room_1: IRoom | None = None
         self._room_2: IRoom | None = None
+        self._character: ICharacter | None = None
 
     @property
     def position(self):
@@ -132,44 +140,80 @@ class Boundary(ABC, IBoundary):
     def room_2(self, room: IRoom):
         self._room_2 = room
 
-    @abstractmethod
-    def move_character_to_another_room(
-            self, character: ICharacter, current_room: IRoom) -> None:
-        """Перемещение модели игрока в соседнюю комнату.
-
-        Args:
-            character (ICharacter): Модель игрока.
-            current_room (IRoom): Комната в которой сейчас находится модель игрока.
-        """
-        ...
-
     def __str__(self):
         return f"{type(self)}, {self._position}"
 
+    def character_wants_to_pass(self, character: ICharacter):
+        self._character = character
+
+    def character_is_gone(self):
+        self._character = None
+
+    @abstractmethod
+    def move_character_to_another_room(self) -> None:
+        ...
+
 
 class Wall(Boundary):
-    def move_character_to_another_room(
-            self, character: ICharacter, current_room: IRoom) -> None:
-        """Перегородка не пропускает через себя, поэтому метод не меняет комнату."""
+    def __init__(self):
+        super().__init__()
+
+    def move_character_to_another_room(self) -> None:
+        """Стена не пропускает через себя, поэтому метод не меняет комнату."""
+        self.character_is_gone()
         return None
 
 
 class Door(Boundary):
-    def move_character_to_another_room(
-            self, character: ICharacter, current_room: IRoom) -> None:
-        if (current_room is self._room_1
-                and self._room_2 is not None):
-            character.change_room(self._room_2)
-        elif (current_room is self._room_2
-                and self._room_1 is not None):
-            character.change_room(self._room_1)
+    def __ini__(self):
+        super().__init__()
+
+    def move_character_to_another_room(self) -> None:
+        if self._character is None:
+            return
+
+        if (
+            self._character.current_room is self._room_1
+            and self._room_2 is not None
+        ):
+            self._character.change_room(self._room_2)
+        elif (
+            self._character.current_room is self._room_2
+            and self._room_1 is not None
+        ):
+            self._character.change_room(self._room_1)
+
+        self.character_is_gone()
 
 
 class Portal(Door):
-    def move_character_to_another_room(
-            self, character: ICharacter, current_room: IRoom) -> None:
-        # тут нужен какой-то таймер
-        super().move_character_to_another_room(character, current_room)
+    def __init__(self, timer: ITimer):
+        super().__init__()
+        self._timer = timer
+
+    @property
+    def timer(self) -> ITimer:
+        return self._timer
+
+    def character_is_gone(self):
+        super().character_is_gone()
+        self._timer.reset()
+
+    def move_character_to_another_room(self) -> None:
+        if self._character is None:
+            # TODO надо подумать, стоит ли тут выкидывать исключение.
+            # TODO не нравится мне этот reset.
+            # Нужно чтобы кто-то запускал метод character_is_gone данного класса.
+            # Потому что сейчас данный метод запускается только после пересечения перегородки.
+            self._timer.reset()
+            return
+
+        if not self._timer.is_active:
+            self._timer.start()
+
+        if self._timer.is_times_up():
+            super().move_character_to_another_room()
+            self._timer.reset()
 
 
 class BoundaryGenerator:
@@ -190,34 +234,67 @@ class BoundaryGenerator:
         boundary_type = random.choice(self._boundaries)
 
         if boundary_type is Wall:
-            # print(f"{self._internal_walls_amount=}")
             percent = self._calculate_walls_percent()
-            # print(f"{percent=}")
             if percent > self._max_walls_percent:
                 return self.get_boundary(position)
             else:
                 self._internal_walls_amount += 1
 
-        boundary = boundary_type()  # type: ignore
+        if boundary_type is Portal:
+            boundary = boundary_type(Timer(amount_of_time=2))  # type: ignore
+        else:
+            boundary = boundary_type()  # type: ignore
+
         boundary.position = position
 
         return boundary  # type: ignore
 
 
+class PortalsKeeper:
+    """Класс контролирует все порталы.
+    Его задача обновлять таймеры и переносить персонажа через порталы.
+    """
+    def __init__(self):
+        self.portals: list[Portal] = []
+
+    def add_portal(self, portal: Portal):
+        self.portals.append(portal)
+
+    def try_to_open_portals(self):
+        for portal in self.portals:
+            if not portal.timer.is_active:
+                continue
+            print(f"Хотим открыть портал: {id(portal)}")
+
+            portal.timer.update()
+            portal.move_character_to_another_room()
+
+
 class Level(ILevel):
-    def __init__(self, size: int, character: ICharacter):
+    def __init__(
+        self,
+        size: int,
+        character_1: ICharacter,
+        character_2: ICharacter,
+        portals_keeper: PortalsKeeper
+    ):
         self._size = size
-        self._character = character
+        self._character_1 = character_1
+        self._character_2 = character_2
+        self._portals_keeper = portals_keeper
         self._rooms = self._generate()
-        self._set_character_into_room()
+        self._set_characters_into_room()
 
     @property
     def rooms(self) -> list[list[IRoom]]:
         return self._rooms
 
-    def is_character_in_this_room(self, room: IRoom) -> bool:
-        # у character нужно сделать свойство current_room
-        return self._character._room is room  # type: ignore
+    def get_character_from_room(self, room: IRoom) -> Optional[ICharacter]:
+        if self._character_1.current_room is room:
+            return self._character_1
+        if self._character_2.current_room is room:
+            return self._character_2
+        return None
 
     def _generate(self) -> list[list[IRoom]]:
         rooms = self._arrange_rooms()
@@ -284,6 +361,9 @@ class Level(ILevel):
             for rooms_pair in adjacent_rooms:
                 boundary = b_generator.get_boundary(BoundaryPosition.VERTICAL)
 
+                if isinstance(boundary, Portal):
+                    self._portals_keeper.add_portal(boundary)
+
                 boundary.room_1 = rooms_pair[0]
                 rooms_pair[0].boundary_right = boundary
 
@@ -306,14 +386,18 @@ class Level(ILevel):
             for rooms_pair in zip(*rows_pair):
                 boundary = b_generator.get_boundary(BoundaryPosition.HORIZONTAL)
 
+                if isinstance(boundary, Portal):
+                    self._portals_keeper.add_portal(boundary)
+
                 boundary.room_1 = rooms_pair[0]
                 rooms_pair[0].boundary_down = boundary
 
                 boundary.room_2 = rooms_pair[1]
                 rooms_pair[1].boundary_up = boundary
 
-    def _set_character_into_room(self):
-        self._character.change_room(self._find_random_room())
+    def _set_characters_into_room(self):
+        self._character_1.change_room(self._find_random_room())
+        self._character_2.change_room(self._find_random_room())
 
     def _find_random_room(self) -> IRoom:
-        return self._rooms[0][0]
+        return self._rooms[random.randint(0, self._size - 1)][random.randint(0, self._size - 1)]

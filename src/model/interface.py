@@ -11,6 +11,12 @@ class BoundaryPosition(Enum):
 
 
 class ICharacter(Protocol):
+    name: str
+
+    @property
+    def current_room(self) -> Optional[IRoom]:
+        ...
+
     def change_room(self, room: IRoom):
         ...
 
@@ -48,13 +54,19 @@ class IBoundary(Protocol):
     def room_2(self, room: IRoom) -> None:
         ...
 
-    def move_character_to_another_room(self, character: ICharacter, current_room: IRoom) -> None:
-        """Перемещение модели игрока в соседнюю комнату.
-
-        Args:
-            character (ICharacter): Модель игрока.
-            current_room (IRoom): Комната в которой сейчас находится модель игрока.
+    def character_wants_to_pass(self, character: ICharacter):
+        """Данный метод передаёт персонажа в данную перегородку чтобы перенести в другую комнату.
         """
+        ...
+
+    def character_is_gone(self):
+        """Данный метод следует вызвать после того как персонаж перешёл в другую комнату
+        или если ушёл и не дождался перехода.
+        """
+        ...
+
+    def move_character_to_another_room(self) -> None:
+        """Перемещение модели игрока в соседнюю комнату."""
         ...
 
 
@@ -124,5 +136,31 @@ class ILevel(Protocol):
     def rooms(self) -> list[list[IRoom]]:
         ...
 
-    def is_character_in_this_room(self, room: IRoom) -> bool:
+    def get_character_from_room(self, room: IRoom) -> Optional[ICharacter]:
+        ...
+
+
+class ITimer:
+    @property
+    def is_active(self) -> bool:
+        ...
+
+    @property
+    def current_time(self) -> int:
+        ...
+
+    @property
+    def end_time(self) -> int:
+        ...
+
+    def start(self) -> None:
+        ...
+
+    def is_times_up(self) -> bool:
+        ...
+
+    def update(self) -> None:
+        ...
+
+    def reset(self) -> None:
         ...

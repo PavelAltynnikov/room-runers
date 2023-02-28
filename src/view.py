@@ -1,29 +1,32 @@
 from typing import Callable, Optional
 
-from src.model.interface import IBoundary, BoundaryPosition, ILevel, IRoom, ICharacter
-from src.model.level import Wall, Door, Portal
+from src.model.interface import IBoundary, BoundaryPosition, ILevel, IRoom, ICharacter, ITimer
+from src.model.level import Wall, Door, Portal, PortalsKeeper
 
 
 class Controller:
     def __init__(self, character: ICharacter):
         self._character = character
-        self._required_answers = "wasdq"
+        self._required_answers = "wasdvq"
         self.quit_action: Optional[Callable[..., None]] = None
 
     def query_input_device(self):
 
         answer = input(
-            "Куда передвинуть персонажа?\n"
-            "w. Вверх\n"
-            "d. Вправо\n"
-            "s. Вниз\n"
-            "a. Влево\n"
-            "q. Закрыть игру\n"
+            f"\nХодит персонаж {self._character.name}\n"
+            "Что делать персонажу?\n"
+            "w. Идти вверх\n"
+            "d. Идти вправо\n"
+            "s. Идти вниз\n"
+            "a. Идти влево\n"
+            "v. Ждать\n"
+            "q. Сдаться\n"
             "Ответ буквой: "
         )
+        print()
 
         if answer not in self._required_answers:
-            print(f"Ваш ответ не понятен, введите один из символов {self._required_answers}")
+            print(f"Ваш ответ не понятен, введите один из символов {self._required_answers}\n")
             return
 
         if answer == "q":
@@ -39,22 +42,69 @@ class Controller:
             self._character.try_to_go_down()
         elif answer == "a":
             self._character.try_to_go_left()
+        elif answer == "v":
+            print("Ну ждите...\n")
+
+
+class EndGameException(Exception):
+    pass
 
 
 class LevelView:
-    def __init__(self, level: ILevel, controller: Controller):
+    def __init__(
+        self,
+        level: ILevel,
+        portals_keeper: PortalsKeeper,
+        game_timer: ITimer,
+        controller_1: Controller,
+        controller_2: Controller
+    ):
         self._level = level
-        self._controller = controller
-        self._controller.quit_action = self.quit
-        self._is_showing = True
+        self._portals_keeper = portals_keeper
+        self._controller_1 = controller_1
+        self._controller_1.quit_action = self.quit
+        self._controller_2 = controller_2
+        self._controller_2.quit_action = self.quit
+        self._game_timer = game_timer
+
+        self.characters_encounter_delegate: Callable[..., bool] | None = None
+        self.game_times_up: Callable[..., bool] | None = None
 
     def show(self):
-        while self._is_showing:
-            self._draw_level()
-            self._controller.query_input_device()
+        try:
+            while True:
+                self._player_turn(self._controller_1)
+                self._player_turn(self._controller_2)
+
+                self._portals_keeper.try_to_open_portals()
+                self._game_timer.update()
+
+                if self.game_times_up:
+                    if self.game_times_up():
+                        self.quit()
+
+                print(
+                    f"Осталось ходов: {self._game_timer.end_time - self._game_timer.current_time}"
+                )
+
+        except EndGameException:
+            print("Игра закончена")
+        finally:
+            input()
 
     def quit(self):
-        self._is_showing = False
+        raise EndGameException()
+
+    def _player_turn(self, controller: Controller):
+        self._draw_level()
+        controller.query_input_device()
+
+        if self.characters_encounter_delegate is None:
+            return
+
+        result = self.characters_encounter_delegate()
+        if result:
+            raise EndGameException()
 
     def _draw_level(self):
         for row in self._level.rooms:
@@ -91,6 +141,9 @@ class LevelView:
         raise Exception(f"Невозможно отрисовать перегородку с типом: {boundary}")
 
     def _draw_character(self, room: IRoom):
-        if self._level.is_character_in_this_room(room):
-            return "c"
-        return " "
+        character = self._level.get_character_from_room(room)
+
+        if character is None:
+            return " "
+
+        return character.name[0]
